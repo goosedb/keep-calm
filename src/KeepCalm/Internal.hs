@@ -17,15 +17,15 @@ data Throttler = Throttler
   }
 
 data ThrottlerConfig = ThrottlerConfig
-  { interval :: !Word64
+  { interval :: !Word64 -- ^ The time interval in nanosecond
   , allowedNumberOfRequests :: !Int
-  , onEvent :: ThrottleEvent -> IO ()
+  , onEvent :: ThrottleEvent -> IO () -- ^ You can log throttler's actions to debug
   }
 
 data ThrottleEvent 
-  = OnThrottle
-  | TryingToTakeThrottler
-  | ThrottlerHasBeenTook
+  = OnThrottle -- ^ Fired when you beat rate limit 
+  | TryingToTakeThrottler -- ^ Fired when thread is trying to lock throttler
+  | ThrottlerHasBeenTook -- ^ Fired when thread locked throttler
 
 newThrottler :: ThrottlerConfig -> IO Throttler
 newThrottler config = do
