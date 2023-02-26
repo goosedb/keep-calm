@@ -3,13 +3,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module KeepCalm.Internal where
+
 import Control.Concurrent (MVar, modifyMVar_, newMVar)
+import Control.Monad (when)
 import Data.Foldable (for_)
 import qualified Data.Sequence as Seq
 import Data.Word (Word64)
 import GHC.Clock (getMonotonicTimeNSec)
 import GHC.Conc (threadDelay)
-import Control.Monad (when)
 
 data Throttler = Throttler
   { config :: !ThrottlerConfig
@@ -17,20 +18,25 @@ data Throttler = Throttler
   }
 
 data ThrottlerConfig = ThrottlerConfig
-  { interval :: !Word64 -- ^ The time interval in nanosecond
+  { interval :: !Word64
+  -- ^ The time interval in nanoseconds
   , allowedNumberOfRequests :: !Int
-  , onEvent :: ThrottleEvent -> IO () -- ^ You can log throttler's actions to debug
+  , onEvent :: ThrottleEvent -> IO ()
+  -- ^ You can log throttler's actions to debug
   }
 
-data ThrottleEvent 
-  = OnThrottle -- ^ Fired when you beat rate limit 
-  | TryingToTakeThrottler -- ^ Fired when thread is trying to lock throttler
-  | ThrottlerHasBeenTook -- ^ Fired when thread locked throttler
+data ThrottleEvent
+  = -- | Fired when you beat rate limit
+    OnThrottle
+  | -- | Fired when thread is trying to lock throttler
+    TryingToTakeThrottler
+  | -- | Fired when thread locked throttler
+    ThrottlerHasBeenTook
 
 newThrottler :: ThrottlerConfig -> IO Throttler
 newThrottler config = do
   runTimestamps <- newMVar mempty
-  pure Throttler { .. }
+  pure Throttler{..}
 
 throttle :: Throttler -> IO a -> IO a
 throttle Throttler{..} action = do
